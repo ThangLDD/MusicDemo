@@ -13,10 +13,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.musicdemo.R
 import com.example.musicdemo.data.model.Song
+import com.example.musicdemo.databinding.ActivityMainBinding
 import com.example.musicdemo.service.MusicService
 import com.example.musicdemo.ui.adapter.OnItemClickListener
 import com.example.musicdemo.ui.adapter.SongAdapter
@@ -24,30 +23,29 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity(), View.OnClickListener, OnItemClickListener {
 
-    private var recyclerView: RecyclerView? = null
-    private var layoutManager: RecyclerView.LayoutManager? = null
     private lateinit var musicService: MusicService
     private var isBound = false
-    private var songAdapter: SongAdapter? = null
+    private val songAdapter by lazy { SongAdapter(songs, this) }
+    private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private var songs: MutableList<Song> = mutableListOf()
 
     private val connect = object : ServiceConnection {
-        override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
-            val serviceBinder = p1 as MusicService.MusicBinder
+        override fun onServiceConnected(componentName: ComponentName?, iBinder: IBinder?) {
+            val serviceBinder = iBinder as MusicService.MusicBinder
             musicService = serviceBinder.getService()
             isBound = true
 
             setView()
         }
 
-        override fun onServiceDisconnected(p0: ComponentName?) {
+        override fun onServiceDisconnected(componentName: ComponentName?) {
             isBound = false
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(binding.root)
         Intent(this, MusicService::class.java).also { intent ->
             bindService(intent, connect, Context.BIND_AUTO_CREATE)
         }
@@ -84,48 +82,38 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnItemClickListe
     }
 
     private fun setView() {
-        assignViews(buttonControl, tv_SongTitle, tv_Artist, recyclerViewSong)
+        assignViews(binding.buttonControl, binding.textViewTitle, binding.textViewArtist, binding.recyclerViewSong)
         songs.clear()
         songs.addAll(musicService.getListSong())
-        songAdapter = SongAdapter(songs, this)
-        recyclerView = recyclerViewSong
-        layoutManager = LinearLayoutManager(this)
-        recyclerView?.layoutManager = layoutManager
-        recyclerView?.adapter = songAdapter
-        recyclerView?.setHasFixedSize(true)
-    }
-
-    companion object {
-        private const val REQUEST_CODE = 1
+        recyclerViewSong.adapter = songAdapter
+        recyclerViewSong.setHasFixedSize(true)
     }
 
     override fun onClick(v: View?) {
-        when (v?.id) {
-            R.id.buttonControl -> playPause()
+        binding.buttonControl.setOnClickListener {
+            playPause()
         }
     }
 
     private fun playPause() {
         if (musicService.getMediaPlayer() != null) {
             musicService.resumeMediaPlayer()
-            if (musicService.getMediaPlayer()?.isPlaying!!) {
-                buttonControl.setImageResource(R.drawable.ic_baseline_pause_24)
+            if (musicService.getMediaPlayer()?.isPlaying == true) {
+                binding.buttonControl.setImageResource(R.drawable.ic_baseline_pause_24)
             } else {
-                buttonControl.setImageResource(R.drawable.ic_baseline_play_arrow_24)
+                binding.buttonControl.setImageResource(R.drawable.ic_baseline_play_arrow_24)
             }
         } else {
             musicService.startMediaPlayer()
-            buttonControl.setImageResource(R.drawable.ic_baseline_pause_24)
+            binding.buttonControl.setImageResource(R.drawable.ic_baseline_pause_24)
         }
         updatePlayer()
-
     }
-
 
     private fun updatePlayer() {
         musicService.getMediaPlayer().let {
-            tv_SongTitle.text = musicService.getTitle()
-            tv_Artist.text = musicService.getArtist()
+            binding.textViewTitle.text = musicService.getTitle()
+            binding.textViewArtist.text = musicService.getArtist()
         }
     }
 
@@ -149,7 +137,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnItemClickListe
         }
         super.onDestroy()
     }
+
+    companion object {
+        private const val REQUEST_CODE = 1
+    }
 }
-
-
-

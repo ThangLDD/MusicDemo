@@ -4,11 +4,10 @@ import android.app.Service
 import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Binder
-import android.os.IBinder
-import com.example.musicdemo.ui.ViewListener
-import com.example.musicdemo.ui.presenter.MainPresenter
 import com.example.musicdemo.data.model.Song
 import com.example.musicdemo.data.source.local.SongHandler
+import com.example.musicdemo.ui.ViewListener
+import com.example.musicdemo.ui.presenter.MainPresenter
 
 class MusicService : Service(), SongHandler, ViewListener {
 
@@ -27,14 +26,16 @@ class MusicService : Service(), SongHandler, ViewListener {
         return START_NOT_STICKY
     }
 
-    override fun onBind(intent: Intent?): IBinder = MusicBinder()
+    override fun onBind(intent: Intent?) = MusicBinder()
 
     fun createMediaPlayer(pos: Int) {
         position = pos
         mediaPlayer = MediaPlayer()
-        mediaPlayer?.setDataSource(listSong[pos].data)
-        mediaPlayer?.prepare()
-        mediaPlayer?.start()
+        mediaPlayer?.let {
+            it.setDataSource(listSong[pos].data)
+            it.prepare()
+            it.start()
+        }
     }
 
     override fun resumeMediaPlayer() {
@@ -46,9 +47,11 @@ class MusicService : Service(), SongHandler, ViewListener {
 
     override fun createMediaPlayer(path: String) {
         mediaPlayer = MediaPlayer()
-        mediaPlayer?.setDataSource(path)
-        mediaPlayer?.prepare()
-        mediaPlayer?.start()
+        mediaPlayer?.let {
+            it.setDataSource(path)
+            it.prepare()
+            it.start()
+        }
     }
 
     override fun stopMediaPlayer() {
@@ -66,15 +69,15 @@ class MusicService : Service(), SongHandler, ViewListener {
         createMediaPlayer(listSong[position].data)
     }
 
-    fun getMediaPlayer(): MediaPlayer? = mediaPlayer
+    fun getMediaPlayer() = mediaPlayer
     fun getListSong(): MutableList<Song> = listSong
-    fun getTitle(): String = listSong[position].title
-    fun getArtist(): String = listSong[position].artist
+    fun getTitle() = listSong[position].title
+    fun getArtist() = listSong[position].artist
 
-    override fun getCurrentPositionMediaPlayer(): Int? = mediaPlayer?.currentPosition
+    override fun getCurrentPositionMediaPlayer() = mediaPlayer?.currentPosition
 
     inner class MusicBinder : Binder() {
-        fun getService(): MusicService = this@MusicService
+        fun getService() = this@MusicService
     }
 
     override fun displayView(songs: MutableList<Song>) {
@@ -82,4 +85,3 @@ class MusicService : Service(), SongHandler, ViewListener {
         song = songs[position]
     }
 }
-
